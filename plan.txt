@@ -1,0 +1,22 @@
+Product:
+
+OpenAI (GPT4) + Data + User Data + Interface
+
+Apply product to something: 
+
+
+Possible:
+
+Data = Weather data, Climate data, 
+
+Social network , Twitter
+
+Advertising Tool project. Find buyers based on tweets, other subscriptions, account
+If A has Elseiver acc and high value subscription, recommend ad?
+
+Comb users browser history, cookies saved items and parse details to chronicle moth, report issues?
+
+Resources 
+steamship, firebase, django OPEN AI keys
+
+ 
