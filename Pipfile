@@ -9,6 +9,11 @@ streamlit = "*"
 langchain = "*"
 openai = "*"
 wikipedia = "*"
+matplotlib = "*"
+scipy = "*"
+seaborn = "*"
+dataclasses = "*"
+twarc = "*"
 
 [dev-packages]
 
