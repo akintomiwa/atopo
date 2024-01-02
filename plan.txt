@@ -1,15 +1,17 @@
 Product:
-
+LookBack(2023)
 OpenAI (GPT4) + Data + User Data + Interface
 
 Apply product to something: 
 
-
 Possible:
 
-Data = Weather data, Climate data, 
+Data = Weather data, Climate data, Social media text data.
 
-Social network , Twitter
+TODO: User auth/sessions
+Google login, email reports.
+
+====
 
 Advertising Tool project. Find buyers based on tweets, other subscriptions, account
 If A has Elseiver acc and high value subscription, recommend ad?
