@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 import sys
 from dotenv import load_dotenv
 from langchain.llms import OpenAI
@@ -37,20 +37,27 @@ from ekphrasis.classes.segmenter import Segmenter
 # nltk.download('stopwords')
 # nltk.download('punkt')
 
+from twarc.client2 import Twarc2
+from twarc.expansions import ensure_flattened
 
 load_dotenv()
 OPENAI_MODEL = "gpt-3.5-turbo"
 # OPENAI_MODEL = "gpt-4"
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
+# X_BEARER_TOKEN = os.environ.get("X_BEARER_TOKEN")
+X_API_KEY = os.environ.get("X_API_KEY")
+X_API_SECRET = os.environ.get("X_API_SECRET")
+X_ACCESS_TOKEN = os.environ.get("X_ACCESS_TOKEN")
+X_ACCESS_TOKEN_SECRET = os.environ.get("X_ACCESS_TOKEN_SECRET")
 
-def retrieve_user_posts(username):
-    # Main query
-    query = f"from:{username} -is:retweet"
-    optional = f"--start-time 2023-07-01 --end-time 2022-12-30  --limit 1000 --archive {username}.jsonl"
-    fullquery = str(query + optional)
-    print(f"Full query: {fullquery}")
-    return fullquery
+# def retrieve_user_posts(username):
+#     # Main query
+#     query = f"from:{username} -is:retweet"
+#     optional = f"--start-time 2023-07-01 --end-time 2022-12-30  --limit 1000 --archive {username}.jsonl"
+#     fullquery = str(query + optional)
+#     print(f"Full query: {fullquery}")
+#     return fullquery
 
 def llm_analysis():
     PROMPT_THEME_INFO = """
@@ -102,37 +109,78 @@ def main():
 
     logging.info(f"\nToday's date is: {str(datetime.today())}.")
 
+    x = Twarc2(bearer_token="X_BEARER_TOKEN")
+
+    # x = Twarc2(consumer_key= X_API_KEY,
+    #            consumer_secret= X_API_SECRET,
+    #            access_token= X_ACCESS_TOKEN,
+    #            access_token_secret= X_ACCESS_TOKEN_SECRET
+    #            )
+
     # fetch username 
     # username = input("Enter your X username: ")
     username = os.environ.get("DEFAULT_USERNAME")
     print(f"Target username: {username}")
 
-    # construct full query 
-    fullquery = retrieve_user_posts(username=username)
     
-    # retrieve posts from SM service with twarc2 CLI 
-    try:
-        # os.system(f"twarc2 search " + "{fullquery}")
-        all = f"twarc2 search {fullquery}"
-        print(f"Full CLI command: {all}")
-        # os.system("twarc2 search " + fullquery)
-        os.system(all)
-        # # flatten
-        # os.system(f"twarc2 flatten {username}_tweets.jsonl {username}_flattweets.jsonl")
-        # # export to csv
-        # os.system(f"twarc2 csv {username}_flattweets.jsonl {username}_flattweets.csv") 
-    except Exception as e:
-        print(f"Error fetching tweets with twarc. Error:{e}")
-    try:    
-        # read in csv file
-        df_cur= pd.read_csv("{username}_flattweets.csv")
-        print(df_cur.head())
-        # make Corpus object 
-        user_corpus = XCorpus(df_cur)
-        print("User Corpus initialized.")
-        print(f" Corpus Id: {user_corpus.id}. Username {user_corpus.username}")
-    except Exception as e:
-        print(f"Error reading in posts csv. Error:{e}")
+    # start date
+    date_string = "2022-01-30"
+
+    # Convert to datetime object
+    date_object = datetime.strptime(date_string, "%Y-%m-%d")
+
+    # Set the timezone to UTC
+    start_time = date_object.replace(tzinfo=timezone.utc)
+    # end_time = datetime.today()
+    
+    # Get the current date and time in UTC - use as end time
+    end_time = datetime.now(timezone.utc)
+
+
+    # search_results is a generator, max_results is max tweets per page, 100 max for full archive search with all expansions.
+    search_results = x.search_all(query=f"{username} lang:en -is:retweet", start_time=start_time, end_time=end_time, max_results=100)
+
+    # Get all results page by page:
+    for page in search_results:
+        # Do something with the whole page of results:
+        # print(page)
+        # or alternatively, "flatten" results returning 1 tweet at a time, with expansions inline:
+        for tweet in ensure_flattened(page):
+            # Do something with the tweet
+            print(tweet)
+
+        # Stop iteration prematurely, to only get 1 page of results.
+        break
+
+    if search_results:
+        print(len(search_results))
+
+    # # construct full query 
+    # fullquery = retrieve_user_posts(username=username)
+    
+    # # retrieve posts from SM service with twarc2 CLI 
+    # try:
+    #     # os.system(f"twarc2 search " + "{fullquery}")
+    #     all = f"twarc2 search {fullquery}"
+    #     print(f"Full CLI command: {all}")
+    #     # os.system("twarc2 search " + fullquery)
+    #     os.system(all)
+    #     # # flatten
+    #     # os.system(f"twarc2 flatten {username}_tweets.jsonl {username}_flattweets.jsonl")
+    #     # # export to csv
+    #     # os.system(f"twarc2 csv {username}_flattweets.jsonl {username}_flattweets.csv") 
+    # except Exception as e:
+    #     print(f"Error fetching tweets with twarc. Error:{e}")
+    # try:    
+    #     # read in csv file
+    #     df_cur= pd.read_csv("{username}_flattweets.csv")
+    #     print(df_cur.head())
+    #     # make Corpus object 
+    #     user_corpus = XCorpus(df_cur)
+    #     print("User Corpus initialized.")
+    #     print(f" Corpus Id: {user_corpus.id}. Username {user_corpus.username}")
+    # except Exception as e:
+    #     print(f"Error reading in posts csv. Error:{e}")
 
  
     
